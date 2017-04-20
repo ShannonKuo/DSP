@@ -18,7 +18,10 @@ double** beta;
 double** Gamma;
 double*** epsilon;
 double* sigmaGamma;
+double* sigmaGamma_0;
+double* sigmaGamma_T;
 double** sigmaGammaNum;
+double** sigmaGammaNum_T;
 double** sigmaEpsilon;
 
 void initialize( HMM hmm ) {
@@ -71,10 +74,17 @@ void initialize( HMM hmm ) {
   }
   //sigma
   sigmaGamma = new double [hmm.state_num];
+  sigmaGamma_0 = new double [hmm.state_num];
+  sigmaGamma_T = new double [hmm.state_num];
   sigmaGammaNum = new double* [hmm.state_num];
+  sigmaGammaNum_T = new double* [hmm.state_num];
   for ( int i = 0; i < hmm.state_num; i++ ){
     sigmaGammaNum[i] = new double [hmm.state_num];
   }
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    sigmaGammaNum_T[i] = new double [hmm.state_num];
+  }
+
   sigmaEpsilon = new double* [hmm.state_num];
   for ( int i = 0; i < hmm.state_num; i++ ){
     sigmaEpsilon[i] = new double [hmm.state_num];
@@ -90,7 +100,7 @@ void calOb( HMM hmm, string line ) {
   } 
 }
 
-void calAlpha( HMM hmm, string line ) {
+void calAlpha( HMM hmm, string line, int id ) {
   int T = line.length();
   for ( int i = 0; i < hmm.state_num; i++ ){
     for ( int t = 0; t < T; t++ ){
@@ -110,16 +120,9 @@ void calAlpha( HMM hmm, string line ) {
     }
     //cout << endl;
   }
-  /*for (int i = 0; i < hmm.state_num; i++){
-    for (int j = 0; j < T; j++){
-      cout << alpha[i][j] << " ";
-    }
-    cout << endl;
-  }
-  */
 }
 
-void calBeta( HMM hmm, string line ) {
+void calBeta( HMM hmm, string line, int id ) {
   for ( int i = 0; i < hmm.state_num; i++ ){
     for ( int t = 0; t < T; t++ ){
       beta[i][t] = 0;
@@ -135,15 +138,9 @@ void calBeta( HMM hmm, string line ) {
       }
     }
   }
-  /*for ( int i = 0; i < hmm.state_num; i++ ){
-    for ( int j = 0; j < T; j++ ){
-      cout << beta[i][j] << " ";
-    }
-    cout << endl;
-  }*/
 }
 
-void calGamma( HMM hmm, string line) {
+void calGamma( HMM hmm, string line, int id) {
   int T = line.length();
   double* sigma = new double [T];
   
@@ -160,9 +157,19 @@ void calGamma( HMM hmm, string line) {
       Gamma[i][j] = alpha[i][j] * beta[i][j] / sigma[j];  
     }
   }
+  /*if ( id == 0){
+  cout << "gamma:"<<endl;
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int j = 0; j < T; j++ ){
+      cout << Gamma[i][j] << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+  }*/
 }
 
-void calEpsilon( HMM hmm, string line ) {
+void calEpsilon( HMM hmm, string line, int id ) {
   int T = line.length();
   double* sigma = new double [T];
   for ( int t = 0; t < T-1; t++ ){
@@ -181,15 +188,20 @@ void calEpsilon( HMM hmm, string line ) {
       }
     }
   }
-  
+ 
 }
 
 void accuGamma( HMM hmm ) {
   for ( int i = 0; i < hmm.state_num; i++ ){
-    for ( int t = 0; t < T-1; t++ ){ 
+    for ( int t = 0; t < T; t++ ){ 
+      if ( t == 0 ){
+        sigmaGamma_0[i] += Gamma[i][0];
+      }
       sigmaGamma[i] += Gamma[i][t]; 
       sigmaGammaNum[ob[t]][i] += Gamma[i][t];
     }
+    sigmaGamma_T[i] = sigmaGamma[i] + Gamma[i][T-1];
+    sigmaGammaNum_T[ob[T-1]][i] = sigmaGammaNum[ob[T-1]][i] + Gamma[i][T-1];
   }
 }
 void accuEpsilon( HMM hmm ) {
@@ -208,20 +220,29 @@ void calPOlambda( HMM hmm ) {
   }
 }
 
-HMM reEstimate( HMM hmm ) {
+HMM reEstimate( HMM hmm, int cnt ) {
+   //cout << "intial"<<endl;
    for ( int i = 0; i < hmm.state_num; i++ ){
-     hmm.initial[i] = Gamma[i][0];
+     hmm.initial[i] = sigmaGamma_0[i] / cnt;
+    // cout << hmm.initial[i] << " ";
    }
+   //cout << endl << endl << "transition:"<<endl;
    for ( int i = 0; i < hmm.state_num; i++ ){
      for ( int j = 0; j < hmm.state_num; j++ ){
        hmm.transition[i][j] = sigmaEpsilon[i][j] / sigmaGamma[i];
+      // cout << sigmaEpsilon[i][j] << " ";
      }
+     //cout << endl;
    }
+   //cout << endl<<"observation:"<<endl;
    for ( int k = 0; k < hmm.state_num; k++ ){
      for ( int j = 0; j < hmm.state_num; j++ ){
-       hmm.observation[k][j] = sigmaGammaNum[k][j] / sigmaGamma[j];
+       hmm.observation[k][j] = sigmaGammaNum_T[k][j] / sigmaGamma_T[j];
+       //cout << hmm.observation[k][j] << " ";
      }
+     //cout << endl;
    }
+   //cout << endl;
    return hmm;
 }
 
@@ -246,7 +267,7 @@ int main( int argc, char* argv[]) {
   loadHMM( &hmm_initial, model_init.c_str() );
   
   for ( int iter = 0; iter < iteration_int; iter++ ){
-    cout << "iter" << iter << " ";
+    int cnt = 0;
     if ( iter > 1 )
       hmm_initial = newModel;
     fstream seq;
@@ -257,19 +278,19 @@ int main( int argc, char* argv[]) {
       initialize( hmm_initial);
       while( getline(seq, line) ){
         calOb( hmm_initial, line );
-        calAlpha( hmm_initial, line );
-        calBeta( hmm_initial, line );
-        calGamma( hmm_initial, line );
-        calEpsilon( hmm_initial, line );
+        calAlpha( hmm_initial, line, cnt );
+        calBeta( hmm_initial, line, cnt );
+        calGamma( hmm_initial, line, cnt );
+        calEpsilon( hmm_initial, line, cnt );
         accuGamma( hmm_initial );
         accuEpsilon( hmm_initial );
         calPOlambda( hmm_initial );
+        cnt++;
       }
       seq.close();
     }
     else cout << "Unable to open file";
-    newModel = reEstimate( hmm_initial );
-    cout << P_O_lambda << endl;
+    newModel = reEstimate( hmm_initial, cnt );
   }
   //sprintf(output, "model_0%d.txt", i + 1);
   FILE *fp = open_or_die( output.c_str(), "w" );
