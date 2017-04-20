@@ -10,7 +10,7 @@
 
 using namespace std;
 
-int T = 50;
+int T = 0;
 int* ob;
 double** delta;
 int** psi;
@@ -18,7 +18,8 @@ int** psi;
 vector<vector <double> > finalDelta;
 vector<int> ans;
 
-void initialize ( HMM hmm ) {
+void initialize ( HMM hmm, int len ) {
+  T = len;
   ob = new int [T];
   for ( int i = 0; i < T; i++ ){
     ob[i] = 0;
@@ -51,18 +52,19 @@ void calOb( HMM hmm, string line ) {
   } 
 }
 
-void calDelta( HMM hmm ) {
+void calDelta( HMM hmm, int cnt, int model ) {
   for ( int i = 0; i < hmm.state_num; i++ ){
     delta[i][0] = hmm.initial[i] * hmm.observation[ob[0]][i];
   }
-  for ( int j = 0; j < hmm.state_num; j++ ){
-    for ( int t = 1; t < T; t++ ){
+  for ( int t = 1; t < T; t++ ){
+    for ( int j = 0; j < hmm.state_num; j++ ){
       double maxDelta = 0;
       for ( int i = 0; i < hmm.state_num; i++ ){
         double temp = delta[i][t-1] * hmm.transition[i][j]; 
         if ( temp > maxDelta ){ 
-          delta[i][t] = temp * hmm.observation[ob[t]][j];
-          psi[i][t] = j;
+          maxDelta = temp;
+          delta[j][t] = temp * hmm.observation[ob[t]][j];
+          psi[j][t] = j;
         }
       }
     }
@@ -81,6 +83,12 @@ void findP( HMM hmm, int model, int id ) {
       maxDelta = delta[i][T-1];
     }
   }
+  /*if ( model == 0 ){
+    for ( int i = 0; i < hmm.state_num; i++ ){
+      cout << delta[i][T-1]<<" ";
+    }
+    cout << endl;
+  }*/
 }
 
 void compare() {
@@ -117,17 +125,23 @@ void outputAns( FILE *fp ) {
 
 void calScore( string result ) {
   int cnt = 0;
+  int total = 0;
   string line1, line2;
   fstream myAns;
   fstream answer;
-  myAns.open( result.c_str() );
+  //myAns.open( result.c_str() );
+  myAns.open( "../result.txt" );
   answer.open( "../testing_answer.txt" );
   while ( getline( myAns, line1 ) ){
     getline( answer, line2 );
-    if ( line1 == line2 )
+    cout << line1 << " " << line2 << endl;
+    if ( line1 == line2 ){
       cnt ++;
+    }
+    total ++;
   }
-  cout << "testing score: " << double(cnt) / ans.size() << endl;
+  cout << cnt << endl;
+  cout << "testing score score: " << double(cnt) / ans.size() << endl;
 }
 
 int main( int argc, char* argv[] ) {
@@ -146,9 +160,9 @@ int main( int argc, char* argv[] ) {
     testing.open( testing_data.c_str() );
     if (testing.is_open()){
       while( getline(testing, line) ){
-        initialize( model_train[model] );
+        initialize( model_train[model], line.length() );
         calOb( model_train[model], line );
-        calDelta( model_train[model] );
+        calDelta( model_train[model], cnt, model );
         findP( model_train[model], model, cnt );
         cnt ++;
       }
@@ -159,5 +173,5 @@ int main( int argc, char* argv[] ) {
   compare();
   FILE *fp = open_or_die( result.c_str(), "w");
   outputAns( fp );
-  calScore( result );
+  //calScore( result );
 }

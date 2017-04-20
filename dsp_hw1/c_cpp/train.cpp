@@ -92,7 +92,12 @@ void calOb( HMM hmm, string line ) {
 
 void calAlpha( HMM hmm, string line ) {
   int T = line.length();
-  for (int i = 0; i < hmm.state_num; i++){
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int t = 0; t < T; t++ ){
+      alpha[i][t] = 0;
+    }
+  }
+  for ( int i = 0; i < hmm.state_num; i++ ){
     alpha[i][0] = hmm.initial[i] * hmm.observation[ob[0]][i];
   } 
   for (int t = 1; t < T; t++){ 
@@ -115,8 +120,11 @@ void calAlpha( HMM hmm, string line ) {
 }
 
 void calBeta( HMM hmm, string line ) {
-  int T = line.length();
-
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int t = 0; t < T; t++ ){
+      beta[i][t] = 0;
+    }
+  }
   for ( int i = 0; i < hmm.state_num; i++ ){
     beta[i][T-1] = 1;
   }
