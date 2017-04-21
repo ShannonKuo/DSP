@@ -76,12 +76,12 @@ void initialize( HMM hmm ) {
   sigmaGamma = new double [hmm.state_num];
   sigmaGamma_0 = new double [hmm.state_num];
   sigmaGamma_T = new double [hmm.state_num];
-  sigmaGammaNum = new double* [hmm.state_num];
-  sigmaGammaNum_T = new double* [hmm.state_num];
-  for ( int i = 0; i < hmm.state_num; i++ ){
+  sigmaGammaNum = new double* [6];
+  sigmaGammaNum_T = new double* [6];
+  for ( int i = 0; i < 6; i++ ){
     sigmaGammaNum[i] = new double [hmm.state_num];
   }
-  for ( int i = 0; i < hmm.state_num; i++ ){
+  for ( int i = 0; i < 6; i++ ){
     sigmaGammaNum_T[i] = new double [hmm.state_num];
   }
 
@@ -157,16 +157,6 @@ void calGamma( HMM hmm, string line, int id) {
       Gamma[i][j] = alpha[i][j] * beta[i][j] / sigma[j];  
     }
   }
-  /*if ( id == 0){
-  cout << "gamma:"<<endl;
-  for ( int i = 0; i < hmm.state_num; i++ ){
-    for ( int j = 0; j < T; j++ ){
-      cout << Gamma[i][j] << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
-  }*/
 }
 
 void calEpsilon( HMM hmm, string line, int id ) {
@@ -235,7 +225,7 @@ HMM reEstimate( HMM hmm, int cnt ) {
      //cout << endl;
    }
    //cout << endl<<"observation:"<<endl;
-   for ( int k = 0; k < hmm.state_num; k++ ){
+   for ( int k = 0; k < 6; k++ ){
      for ( int j = 0; j < hmm.state_num; j++ ){
        hmm.observation[k][j] = sigmaGammaNum_T[k][j] / sigmaGamma_T[j];
        //cout << hmm.observation[k][j] << " ";

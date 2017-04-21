@@ -13,7 +13,6 @@ using namespace std;
 int T = 0;
 int* ob;
 double** delta;
-int** psi;
 //finalDelta
 vector<vector <double> > finalDelta;
 vector<int> ans;
@@ -32,16 +31,6 @@ void initialize ( HMM hmm, int len ) {
   for ( int i = 0; i < hmm.state_num; i++ ){
     for ( int t = 0; t < T; t++ ){
       delta[i][t] = 0;
-    }
-  }
-  //psi
-  psi = new int* [hmm.state_num];
-  for ( int i = 0; i < hmm.state_num; i++ ){
-    psi[i] = new int [T];
-  }
-  for ( int i = 0; i < hmm.state_num; i++ ){
-    for ( int t = 0; t < T; t++ ){
-      psi[i][t] = 0;
     }
   }
 }
@@ -64,7 +53,6 @@ void calDelta( HMM hmm, int cnt, int model ) {
         if ( temp > maxDelta ){ 
           maxDelta = temp;
           delta[j][t] = temp * hmm.observation[ob[t]][j];
-          psi[j][t] = j;
         }
       }
     }
@@ -123,27 +111,6 @@ void outputAns( FILE *fp ) {
   }
 }
 
-void calScore( string result ) {
-  int cnt = 0;
-  int total = 0;
-  string line1, line2;
-  fstream myAns;
-  fstream answer;
-  //myAns.open( result.c_str() );
-  myAns.open( "../result.txt" );
-  answer.open( "../testing_answer.txt" );
-  while ( getline( myAns, line1 ) ){
-    getline( answer, line2 );
-    cout << line1 << " " << line2 << endl;
-    if ( line1 == line2 ){
-      cnt ++;
-    }
-    total ++;
-  }
-  cout << cnt << endl;
-  cout << "testing score score: " << double(cnt) / ans.size() << endl;
-}
-
 int main( int argc, char* argv[] ) {
   int cnt = 0;
   string modellist = argv[1];
@@ -173,5 +140,4 @@ int main( int argc, char* argv[] ) {
   compare();
   FILE *fp = open_or_die( result.c_str(), "w");
   outputAns( fp );
-  //calScore( result );
 }
