@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -16,6 +17,7 @@ double** delta;
 //finalDelta
 vector<vector <double> > finalDelta;
 vector<int> ans;
+vector<double> resultP;
 
 void initialize ( HMM hmm, int len ) {
   T = len;
@@ -90,25 +92,71 @@ void compare() {
       }
     }
     ans.push_back( temp );
+    resultP.push_back( maxP );
   }
-  /*
-  for ( int i = 0; i < finalDelta.size(); i++ ){
-    for ( int j = 0; j < 5; j++ ){
-      cout << finalDelta[i][j] << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
-  */
 }
 
 void outputAns( FILE *fp ) {
   for ( int i = 0; i < finalDelta.size(); i++ ){
+    //fprintf( fp, "model_0%d.txt %e\n", ans[i], resultP[i] );
     fprintf( fp, "model_0%d.txt\n", ans[i] );
-    //sprintf( write, "model_0%d.txt\n", i + 1 );
-    //output.write( write.c_str() );
-    //cout << write<<endl;
   }
+}
+
+void outputAcc( string result ) {
+  int cnt = 0;
+  int total = 0;
+  char* model;
+  double accuracy = 0;
+  char line1[20], line2[20];
+  string accuracy_old;
+  string accuracy_s;
+  string file = "acc.txt"; 
+
+  /*fstream myAns; 
+  fstream answer; 
+  fstream acc;
+  ostringstream buff;
+  myAns.open( result.c_str() );
+  answer.open( "../testing_answer.txt" );
+  acc.open( "acc.txt" );*/
+  FILE *acc = open_or_die( file.c_str(), "w" );
+  FILE *myAns = open_or_die( result.c_str(), "r");
+
+  fstream test;
+  test.open( "test.txt");
+  while ( fscanf( myAns, "%s", line1 ) > 0 ){
+    test << line1 << endl;
+    /*getline( answer, line2 );
+    int i = 0;
+    bool same = 1;
+    while ( int(line1[i]) != 32 && line1[i] != NULL && line1[i] != '\n' ){
+      if ( line1[i] != line2[i] ){
+        same = 0;
+        break;
+      }
+      else i++;
+    }
+    if ( same ) cnt++;
+    */
+    total++;
+  }
+  cout << total<<endl;
+  /*accuracy = double(cnt) / total;
+  buff << accuracy;
+  accuracy_s = buff.str();
+  cout << "testing score: " << accuracy << endl;
+  if ( getline( acc, accuracy_old ) ) {
+    acc.close();
+    if ( accuracy > atoi(accuracy_old.c_str()) ){
+      FILE *fp = open_or_die( file.c_str(), "w");
+      fprintf( fp, "%s", accuracy_s.c_str());
+    }
+  }
+  else{ 
+    FILE *fp = open_or_die( file.c_str(), "w");
+    fprintf( fp, "%s", accuracy_s.c_str() );
+  }*/
 }
 
 int main( int argc, char* argv[] ) {
@@ -140,4 +188,5 @@ int main( int argc, char* argv[] ) {
   compare();
   FILE *fp = open_or_die( result.c_str(), "w");
   outputAns( fp );
+  outputAcc( result );
 }
