@@ -16,12 +16,11 @@ double P_O_lambda = 0;
 double** alpha;
 double** beta;
 double** Gamma;
+double** Gammat;
+double*** GammatO;
 double*** epsilon;
 double* sigmaGamma;
 double* sigmaGamma_0;
-double* sigmaGamma_T;
-double** sigmaGammaNum;
-double** sigmaGammaNum_T;
 double** sigmaEpsilon;
 
 void initialize( HMM hmm ) {
@@ -55,6 +54,32 @@ void initialize( HMM hmm ) {
       Gamma[i][j] = 0;
     }
   }
+  Gammat = new double* [hmm.state_num];
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    Gammat[i] = new double [T];
+  }
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int j = 0; j < T; j++ ){
+      Gammat[i][j] = 0;
+    }
+  }
+
+  GammatO = new double** [hmm.state_num];
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    GammatO[i] = new double* [T];
+  }
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int j = 0; j < T; j++ ){
+      GammatO[i][j] = new double [6];
+    }
+  }
+  for ( int i = 0; i < hmm.state_num; i++ ){
+    for ( int j = 0; j < T; j++ ){
+      for ( int k = 0; k < 6; k++ )
+        GammatO[i][j][k] = 0;
+    }
+  }
+
   //epsilon
   epsilon = new double** [T-1];
   for ( int i = 0; i < T-1; i++ ){
@@ -75,15 +100,6 @@ void initialize( HMM hmm ) {
   //sigma
   sigmaGamma = new double [hmm.state_num];
   sigmaGamma_0 = new double [hmm.state_num];
-  sigmaGamma_T = new double [hmm.state_num];
-  sigmaGammaNum = new double* [6];
-  sigmaGammaNum_T = new double* [6];
-  for ( int i = 0; i < 6; i++ ){
-    sigmaGammaNum[i] = new double [hmm.state_num];
-  }
-  for ( int i = 0; i < 6; i++ ){
-    sigmaGammaNum_T[i] = new double [hmm.state_num];
-  }
 
   sigmaEpsilon = new double* [hmm.state_num];
   for ( int i = 0; i < hmm.state_num; i++ ){
@@ -116,9 +132,7 @@ void calAlpha( HMM hmm, string line, int id ) {
         alpha[j][t] += alpha[i][t-1] * hmm.transition[i][j];
       }
       alpha[j][t] *= hmm.observation[ob[t]][j];
-      //cout << alpha[j][t] << " ";
     }
-    //cout << endl;
   }
 }
 
@@ -187,11 +201,12 @@ void accuGamma( HMM hmm ) {
       if ( t == 0 ){
         sigmaGamma_0[i] += Gamma[i][0];
       }
-      sigmaGamma[i] += Gamma[i][t]; 
-      sigmaGammaNum[ob[t]][i] += Gamma[i][t];
+      if ( t != T-1 )
+        sigmaGamma[i] += Gamma[i][t]; 
+      Gammat[i][t] += Gamma[i][t];
+      GammatO[i][t][ob[t]] += Gamma[i][t];
+
     }
-    sigmaGamma_T[i] = sigmaGamma[i] + Gamma[i][T-1];
-    sigmaGammaNum_T[ob[T-1]][i] = sigmaGammaNum[ob[T-1]][i] + Gamma[i][T-1];
   }
 }
 void accuEpsilon( HMM hmm ) {
@@ -211,40 +226,31 @@ void calPOlambda( HMM hmm ) {
 }
 
 HMM reEstimate( HMM hmm, int cnt ) {
-   //cout << "intial"<<endl;
    for ( int i = 0; i < hmm.state_num; i++ ){
      hmm.initial[i] = sigmaGamma_0[i] / cnt;
-    // cout << hmm.initial[i] << " ";
    }
-   //cout << endl << endl << "transition:"<<endl;
    for ( int i = 0; i < hmm.state_num; i++ ){
      for ( int j = 0; j < hmm.state_num; j++ ){
        hmm.transition[i][j] = sigmaEpsilon[i][j] / sigmaGamma[i];
-      // cout << sigmaEpsilon[i][j] << " ";
      }
-     //cout << endl;
    }
-   //cout << endl<<"observation:"<<endl;
    for ( int k = 0; k < 6; k++ ){
      for ( int j = 0; j < hmm.state_num; j++ ){
-       hmm.observation[k][j] = sigmaGammaNum_T[k][j] / sigmaGamma_T[j];
-       //cout << hmm.observation[k][j] << " ";
+       double tempGammaNum = 0;
+       double tempGamma = 0;
+       for ( int t = 0; t < T; t++ ){
+         tempGammaNum += GammatO[j][t][k];
+         tempGamma += Gammat[j][t];
+       }
+       hmm.observation[k][j] = tempGammaNum / tempGamma;
      }
-     //cout << endl;
    }
-   //cout << endl;
    return hmm;
 }
 
 
 int main( int argc, char* argv[]) {
 
- /*
-	HMM hmms[5];
-	load_models( "modellist.txt", hmms, 5);
-	dump_models( hmms, 5);
-*/
- 
 	//load initial model
   HMM hmm_initial;
   HMM newModel; 
@@ -262,7 +268,6 @@ int main( int argc, char* argv[]) {
       hmm_initial = newModel;
     fstream seq;
     string line;
-    //sprintf(filename, "../seq_model_0%d.txt", i + 1);
     seq.open(seq_model.c_str());
     if (seq.is_open()){
       initialize( hmm_initial);
@@ -282,9 +287,7 @@ int main( int argc, char* argv[]) {
     else cout << "Unable to open file";
     newModel = reEstimate( hmm_initial, cnt );
   }
-  //sprintf(output, "model_0%d.txt", i + 1);
   FILE *fp = open_or_die( output.c_str(), "w" );
   dumpHMM( fp, &newModel );
 	return 0;
-
 }
