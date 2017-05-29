@@ -108,11 +108,10 @@ vector<string> viterbi( vector <string> data ) {
     prob.empty();
     prob.resize( mymap[data[i+1]].size() );
     for (  int j = 0; j < mymap[data[i+1]].size(); j++ ) {
-      output << mymap[data[i+1]][j] << " ";
       if ( i == 0 ) {
         double probability = 0;
         string key;
-        vector <string> v = mymap[data[i+1]];
+        vector <string> v = mymap[data[i]];
         for ( int k = 0; k < v.size(); k++ ) {
           for ( map<string, double> :: iterator it = dic[v[j]].begin(); it != dic[v[j]].end(); ++it ){
             probability += it->second;
@@ -156,6 +155,7 @@ vector<string> viterbi( vector <string> data ) {
   }
   for ( int i = data.size() - 1; i > 0; i-- ) {
     maxKey[i-1] = prev[i][maxKey[i]];
+    cout << maxKey[i-1] << " ";
   } 
   return maxKey;
 }
@@ -175,8 +175,8 @@ int main() {
 
   ifstream test;
   test.open( "./testdata/1.txt" );
-  //ofstream output;
-  //output.open( "./testdata/1_output.txt" );
+  ofstream output;
+  output.open( "./testdata/1_output.txt" );
   string line;
   string s;
   vector <string> ans;
@@ -184,7 +184,7 @@ int main() {
   while ( getline( test, line ) ) {
     cout << "line:" << cnt << endl;
     cnt++;
-    if ( cnt > 1 ) break;
+    if ( cnt > 2 ) break;
     vector <string> temp;
     for ( int i = 0; i < line.length(); i++ ) {
       if ( s.length() < 2 ) {
@@ -196,9 +196,11 @@ int main() {
         s = "";
       } 
     }
+    cout << "viterbi" << endl;
     ans = viterbi( temp );
+    cout << "finish viterbi"<< ans.size() << endl;
     for ( int i = 0; i < ans.size(); i++ )
-      cout << ans[i] << " ";
+      output << ans[i] << " ";
     cout << endl;
   }
 }
