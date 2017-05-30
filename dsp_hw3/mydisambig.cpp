@@ -13,11 +13,9 @@ map <string, map<string, double> > dic;
 map <string, double> dic_onegram;
 map <string, vector<string> > mymap;
 
-void constructDic() {
+void constructDic( ifstream& bigram) {
   int start = 0;
   map <string, double> voc;
-  ifstream bigram;
-  bigram.open("./bigram.lm");
   int cnt = 0;
   string line;
   pair <string, double> p;
@@ -82,7 +80,6 @@ void constructDic() {
       start = 1;
     }
     else if ( line == "\\2-grams:") {
-      cout << "2-gram start"<<endl;
       start = 2; 
     }
     
@@ -90,9 +87,7 @@ void constructDic() {
   }
 }
 
-void readMap() {
-  ifstream mymapFile;
-  mymapFile.open("./ZhuYin-Big5.map");
+void readMap( ifstream& mymapFile ) {
 
   string line;
   while ( getline(mymapFile, line) ) {
@@ -213,22 +208,21 @@ vector<string> viterbi( vector <string> data ) {
 }
 
 
-int main() {
-  string testFile = "./testdata/1.txt";
-  string outputFile = "./testdata/1_output.txt";
+int main( int argc, char* argv[]) {
+  //cout << "constructing dictionary..." << endl;
+  ifstream bigram ( argv[6] );
+  constructDic( bigram );
+  //cout << "finish constructing dictionary" << endl;
 
-  cout << "constructing dictionary..." << endl;
-  constructDic();
-  cout << "finish constructing dictionary" << endl;
-
-  cout << "readMap" << endl;
-  readMap();
-  cout << "finish read map" << endl;
+  //cout << "readMap" << endl;
+  ifstream mymapFile ( argv[4] );
+  readMap( mymapFile );
+  //cout << "finish read map" << endl;
 
   ifstream test;
-  test.open( "./testdata/1.txt" );
+  test.open( argv[2] );
   ofstream output;
-  output.open( "./testdata/1_output.txt" );
+  output.open( argv[10] );
   string line;
   string s;
   vector <string> ans;
@@ -259,13 +253,13 @@ int main() {
       }
       */
     }
-    cout << "viterbi" << endl;
+    //cout << "viterbi" << endl;
     ans = viterbi( testData );
-    cout << "finish viterbi"<< ans.size() << endl;
-    output << "<s> ";
+    //cout << "finish viterbi"<< ans.size() << endl;
+    cout << "<s> ";
     for ( int i = 0; i < ans.size(); i++ )
-      output <<ans[i] << " ";
-    output << "</s>"<<endl;
+      cout <<ans[i] << " ";
+    cout << "</s>"<<endl;
     //ans.clear();
     cnt++;
   }
