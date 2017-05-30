@@ -10,18 +10,20 @@
 using namespace std;
 
 map <string, map<string, double> > dic;
+map <string, double> dic_onegram;
 map <string, vector<string> > mymap;
 
 void constructDic() {
-  bool start = 0;
+  int start = 0;
   map <string, double> voc;
   ifstream bigram;
   bigram.open("./bigram.lm");
   int cnt = 0;
   string line;
   pair <string, double> p;
+
   while( getline( bigram, line )) {
-    if ( start && line.length() > 0 && line != "\\end\\") {
+    if ( start == 1 && line.length() > 0 && line != "\\2-grams:") {
       vector <string> temp;
       int begin = 0; 
       string s;
@@ -29,7 +31,33 @@ void constructDic() {
         if ( line[i] == ' ' || line[i] == '	') {
           if ( s != "") {
             temp.push_back(s);
-            s = " "; 
+            s = ""; 
+          }
+        }
+        else if ( i == line.length() - 1 ) {
+          s += line[i];
+          temp.push_back(s);
+        } 
+        else 
+          s += line[i];
+      }
+      if ( dic_onegram.count( temp[1] ) < 0 ) {
+        dic_onegram.insert( make_pair( temp[1], atof(temp[0].c_str() ) ) );
+      }
+      else{
+        dic_onegram[ temp[1] ] = atof(temp[0].c_str()) ;
+      }
+    }
+
+    if ( start == 2 && line.length() > 0 && line != "\\end\\") {
+      vector <string> temp;
+      int begin = 0; 
+      string s;
+      for ( int i = 0; i < line.length(); i++ ) {
+        if ( line[i] == ' ' || line[i] == '	') {
+          if ( s != "") {
+            temp.push_back(s);
+            s = ""; 
           }
         }
         else if ( i == line.length() - 1 ) {
@@ -49,9 +77,15 @@ void constructDic() {
         dic[ temp[1] ].insert( p );
       }
     }
-    if ( line == "\\2-grams:") {
-      start = 1; 
+
+    if ( line == "\\1-grams:" ) {
+      start = 1;
     }
+    else if ( line == "\\2-grams:") {
+      cout << "2-gram start"<<endl;
+      start = 2; 
+    }
+    
     cnt++;
   }
 }
@@ -66,9 +100,9 @@ void readMap() {
      string s;
      for ( int i = 0; i < line.length(); i++ ) {
        if ( line[i] == ' ' ) {
-         if ( s != "") {
+         if ( s != "" && s != " ") {
            temp.push_back(s);
-           s = " "; 
+           s = ""; 
          }
        }
        else if ( i == line.length() - 1 ) {
@@ -100,54 +134,73 @@ vector<string> viterbi( vector <string> data ) {
   vector <pair<string, double> > prob_prev;
   vector <map<string, string> >prev;
   pair <string, double> p;
-  ofstream output;
-  output.open( "./testdata/1_output.txt" );
-
   prev.resize(data.size());
+  if ( data.size() == 1 ) {
+    double maxProb = -10000000;
+    vector <string> v = mymap[ data[0] ];
+    vector <string> ans;
+    ans.resize(1);
+    for ( int i = 0; i < v.size(); i++ ) {
+      if ( dic_onegram[v[i]] != 0 && dic_onegram[v[i]] > maxProb ) {
+        maxProb = dic_onegram[v[i]];
+        ans[0] = v[i];
+      }
+    }
+    return ans;
+  }
   for ( int i = 0;  i < data.size() - 1; i++ ) {
-    prob.empty();
-    prob.resize( mymap[data[i+1]].size() );
-    for (  int j = 0; j < mymap[data[i+1]].size(); j++ ) {
-      if ( i == 0 ) {
+    prob.clear();
+    if ( i == 0 ) {
+      for ( int j = 0; j < mymap[data[i]].size(); j++ ) {
         double probability = 0;
-        string key;
-        vector <string> v = mymap[data[i]];
-        for ( int k = 0; k < v.size(); k++ ) {
-          for ( map<string, double> :: iterator it = dic[v[j]].begin(); it != dic[v[j]].end(); ++it ){
-            probability += it->second;
-            key = v[j];
-          }
+        string key = mymap[data[i]][j];
+        if ( dic_onegram.count(mymap[data[i]][j]) <= 0) {
+          probability = -99;
         }
+        else {
+          probability = dic_onegram[mymap[data[i]][j]];
+        }
+
         p = make_pair( key, probability);
         prob_prev.push_back( p );
       }
-      double probability = 0;
+    }
+
+    for ( int j = 0; j < mymap[data[i+1]].size(); j++ ) {
+      double probability = -10000000000;
       string key;
+      pair <string, string> newpair;
       for ( int k = 0; k < prob_prev.size(); k++ ) {
+        double bigramProb = 0;
         p = prob_prev[k];
-        double temp = p.second * dic[ p.first ][ mymap[data[i+1]][j] ] ;
-        map <string, string> m;
-        m.insert( make_pair( mymap[data[i+1]][j], p.first ) );
-        if ( k == 0 ) {
-          probability = temp;
-          prev[i] = m;
+        if (dic[ p.first ].count(mymap[data[i+1]][j]) <= 0) {
+          bigramProb = -99; 
         }
-        else if ( temp  > probability ) {
-          probability = temp;
-          prev[i] = m;
+        else {
+          bigramProb = dic[ p.first ][ mymap[data[i+1]][j]]; 
         }
-        key = mymap[data[i+1]][j];
+        double temp = p.second + bigramProb;
+        if ( temp  > probability ) {
+          newpair = make_pair( mymap[data[i+1]][j], p.first );
+          probability = temp;
+        }
       }
+      prev[i+1].insert(newpair);
+      key = mymap[data[i+1]][j];
       p = make_pair( key, probability );
       prob.push_back( p );
     } 
-    prob_prev.empty();
+    prob_prev.clear();
     prob_prev = prob;
   }
-  double maxProb = 0;
+  double maxProb = -10000000000;
   vector <string> maxKey;
   maxKey.resize(data.size()); 
   for ( int i = 0; i < prob.size(); i++ ) {
+    if ( i == 0 ) {
+      maxProb = prob[i].second;
+      maxKey[maxKey.size()-1] = prob[i].first;
+    }
     if ( prob[i].second > maxProb ) {
       maxProb = prob[i].second;
       maxKey[maxKey.size()-1] = prob[i].first;
@@ -155,7 +208,6 @@ vector<string> viterbi( vector <string> data ) {
   }
   for ( int i = data.size() - 1; i > 0; i-- ) {
     maxKey[i-1] = prev[i][maxKey[i]];
-    cout << maxKey[i-1] << " ";
   } 
   return maxKey;
 }
@@ -180,27 +232,41 @@ int main() {
   string line;
   string s;
   vector <string> ans;
+  vector <string> ansTemp;
   int cnt = 1;
   while ( getline( test, line ) ) {
-    cout << "line:" << cnt << endl;
-    cnt++;
-    if ( cnt > 2 ) break;
-    vector <string> temp;
+    vector <string> testData;
+    
     for ( int i = 0; i < line.length(); i++ ) {
       if ( s.length() < 2 ) {
         if ( line[i] != ' ' )
           s += line[i];
       }
       if ( s.length() == 2 ) {
-        temp.push_back( s );
+        testData.push_back( s );
         s = "";
       } 
+      /*
+      if ( i < line.length() - 2) {
+        if ( line[i] == ' ' && line[i+1] == ' ' && line[i+2] == ' ') {
+          ansTemp = viterbi(testData);
+          for ( int j = 0; j < ansTemp.size(); j++ )  {
+            ans.push_back(ansTemp[j]);
+          }
+          testData.clear();
+          ansTemp.clear();
+        }
+      }
+      */
     }
     cout << "viterbi" << endl;
-    ans = viterbi( temp );
+    ans = viterbi( testData );
     cout << "finish viterbi"<< ans.size() << endl;
+    output << "<s> ";
     for ( int i = 0; i < ans.size(); i++ )
-      output << ans[i] << " ";
-    cout << endl;
+      output <<ans[i] << " ";
+    output << "</s>"<<endl;
+    //ans.clear();
+    cnt++;
   }
 }
