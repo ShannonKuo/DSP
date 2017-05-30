@@ -62,7 +62,7 @@ int main() {
     }
     output << endl;
     for ( int j = 1; j < zhuArr[i].size(); j++ ) {
-      output << zhuArr[i][j] << "   " << zhuArr[i][j] << endl;
+      output << zhuArr[i][j] << "  " << zhuArr[i][j] << endl;
     } 
   }
 }
