@@ -129,7 +129,7 @@ vector<string> viterbi( vector <string> data ) {
   vector <pair<string, double> > prob_prev;
   vector <map<string, string> >prev;
   pair <string, double> p;
-  prev.resize(data.size());
+  prev.resize(data.size() + 1);
   if ( data.size() == 1 ) {
     double maxProb = -10000000;
     vector <string> v = mymap[ data[0] ];
@@ -149,18 +149,18 @@ vector<string> viterbi( vector <string> data ) {
       for ( int j = 0; j < mymap[data[i]].size(); j++ ) {
         double probability = 0;
         string key = mymap[data[i]][j];
-        if ( dic_onegram.count(mymap[data[i]][j]) <= 0) {
+        if ( dic["<s>"].count(mymap[data[i]][j]) <= 0) {
           probability = -99;
         }
         else {
-          probability = dic_onegram[mymap[data[i]][j]];
+          probability = dic["<s>"][mymap[data[i]][j]];
         }
 
         p = make_pair( key, probability);
         prob_prev.push_back( p );
       }
     }
-
+    
     for ( int j = 0; j < mymap[data[i+1]].size(); j++ ) {
       double probability = -10000000000;
       string key;
@@ -188,9 +188,34 @@ vector<string> viterbi( vector <string> data ) {
     prob_prev.clear();
     prob_prev = prob;
   }
+//
+  double probability = -10000000000;
+  string key;
+  pair <string, string> newpair;
+  prob.clear();
+  for ( int k = 0; k < prob_prev.size(); k++ ) {
+    double bigramProb = 0;
+    p = prob_prev[k];
+    if (dic[ p.first ].count("</s>") <= 0) {
+      bigramProb = -99; 
+    }
+    else {
+      bigramProb = dic[ p.first ][ "</s>" ]; 
+    }
+    double temp = p.second + bigramProb;
+    if ( temp  > probability ) {
+      newpair = make_pair( "</s>", p.first );
+      probability = temp;
+    }
+  }
+  prev[data.size()].insert(newpair);
+  p = make_pair( "</s>", probability );
+  prob.push_back( p );
+
+//	
   double maxProb = -10000000000;
   vector <string> maxKey;
-  maxKey.resize(data.size()); 
+  maxKey.resize(data.size() + 1); 
   for ( int i = 0; i < prob.size(); i++ ) {
     if ( i == 0 ) {
       maxProb = prob[i].second;
@@ -201,7 +226,7 @@ vector<string> viterbi( vector <string> data ) {
       maxKey[maxKey.size()-1] = prob[i].first;
     }
   }
-  for ( int i = data.size() - 1; i > 0; i-- ) {
+  for ( int i = data.size(); i > 0; i-- ) {
     maxKey[i-1] = prev[i][maxKey[i]];
   } 
   return maxKey;
@@ -253,13 +278,16 @@ int main( int argc, char* argv[]) {
       }
       */
     }
-    //cout << "viterbi" << endl;
+    
+		//cout << "viterbi" << endl;
     ans = viterbi( testData );
     //cout << "finish viterbi"<< ans.size() << endl;
     cout << "<s> ";
     for ( int i = 0; i < ans.size(); i++ )
-      cout <<ans[i] << " ";
-    cout << "</s>"<<endl;
+			if ( i == ans.size() - 1 )
+        cout << ans[i];
+		  else cout << ans[i] << " ";
+		cout << endl;
     //ans.clear();
     cnt++;
   }
