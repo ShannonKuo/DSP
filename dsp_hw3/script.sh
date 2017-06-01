@@ -1,5 +1,14 @@
 #!/bin/bash
 #./a.out -text testdata/1.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/1.txt;
+#./a.out -text testdata/2.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/2.txt;
+#./a.out -text testdata/3.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/3.txt;
+#./a.out -text testdata/4.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/4.txt;
+#./a.out -text testdata/5.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/5.txt;
+#./a.out -text testdata/6.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/6.txt;
+#./a.out -text testdata/7.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/7.txt;
+#./a.out -text testdata/8.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/8.txt;
+#./a.out -text testdata/9.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/9.txt;
+#./a.out -text testdata/10.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result2/10.txt;
 ./srilm-1.5.10/bin/i686-m64/disambig -text testdata/1.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result1/1.txt;
 ./srilm-1.5.10/bin/i686-m64/disambig -text testdata/2.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result1/2.txt;
 ./srilm-1.5.10/bin/i686-m64/disambig -text testdata/3.txt -map ZhuYin-Big5.map -lm bigram.lm -order 2 > result1/3.txt;
