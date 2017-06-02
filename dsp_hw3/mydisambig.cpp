@@ -12,7 +12,6 @@ using namespace std;
 
 map <string, vector<string> > mymap;
 int ngram_order = 2; Vocab voc; Ngram lm( voc, ngram_order );
-map< string, vector< string > > M;
 
 void readLM( Ngram& );
 void readMP( ifstream& );
@@ -20,9 +19,8 @@ void viterbi( ofstream&, string& );
 double getProb( string&, string = " ", int = 2 );
 
 
-void readLM( Ngram& lm ) {
-  const char lm_filename[] = "bigram.lm";
-  File lmFile( lm_filename, "r" );
+void readLM( Ngram& lm, string bigram ) {
+  File lmFile( bigram.c_str(), "r" );
   lm.read( lmFile );
   lmFile.close();
 }
@@ -158,7 +156,7 @@ vector<string> viterbi( vector <string> data ) {
 
 int main( int argc, char* argv[]) {
   ifstream bigram ( argv[6] );
-  readLM(lm);
+  readLM(lm, argv[6]);
   ifstream mymapFile ( argv[4] );
   readMap( mymapFile );
 
