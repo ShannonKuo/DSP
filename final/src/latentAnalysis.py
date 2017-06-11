@@ -82,6 +82,9 @@ test_data = pd.read_csv( "../data/test_data.csv",
                           dtype = dtypes1, sep = sep  )
 test_label = pd.read_csv( "../data/test_label.csv", usecols = ['label'], dtype = dtypes2, sep = sep )
 test_map = pd.read_csv( "../data/test_map.csv", usecols = ['topic', 'label'], dtype = dtypes3, sep = sep )
+#output_log = open("output_log.csv", "w")
+dtypes4 = { 'id': np.str, 'value': np.str }
+log_table = pd.read_csv( "output_log.csv", usecols = ['id', 'value'], dtype = dtypes4, sep = sep )
 
 tf = np.zeros(( doc_num, voc_num ))
 total = np.zeros( doc_num )
@@ -89,8 +92,15 @@ word = np.zeros( voc_num )
 x_train = np.zeros(( doc_num, voc_num ))
 y_train = np.zeros(( doc_num, 20 ))
 
-for i in range( 100 ):
-	#for i in range( len( train_data['doc_id'] ) ):
+#for i in range( doc_num ):
+  #output_log.write( str(i+1) + " " + str(log(i+1)) + "\n" )
+  #output_log.write( " " )
+  #output_log.write( log(i+1) )
+  #output_log.write("\n")
+#print("output finish")
+for i in range( len( train_data['doc_id'] ) ):
+  if (i % 100 == 0):
+    print ( float(i) / len(train_data['doc_id']) * 100)
   row = int( train_data['doc_id'][i] ) - 1
   col = int( train_data['word_id'][i] ) - 1
   tf[row][col] = int( train_data['num_of_word'][i] ) 
@@ -100,9 +110,10 @@ print("finish 1")
 
 temp = log( doc_num )
 for j in range( voc_num ):
-  log_word = log( word[j]+1 );
+  #log_word = log( word[j]+1 );
+  log_word = float(log_table["value"][word[j]])
   if ( j % 100 == 0 ):
-    print (j / voc_num * 100)
+    print (float(j) / voc_num * 100)
   for i in range( doc_num ):
     tf[i][j] = tf[i][j] / total[i]
     if ( doc_num < word[j] ):
