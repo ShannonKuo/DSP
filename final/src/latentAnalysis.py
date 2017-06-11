@@ -7,6 +7,7 @@ import pandas as pd
 import sklearn 
 import nltk
 
+from math import log
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -81,20 +82,54 @@ test_data = pd.read_csv( "../data/test_data.csv",
                           dtype = dtypes1, sep = sep  )
 test_label = pd.read_csv( "../data/test_label.csv", usecols = ['label'], dtype = dtypes2, sep = sep )
 test_map = pd.read_csv( "../data/test_map.csv", usecols = ['topic', 'label'], dtype = dtypes3, sep = sep )
-count = np.zeros(( doc_num, voc_num))
+
+tf = np.zeros(( doc_num, voc_num ))
+total = np.zeros( doc_num )
+word = np.zeros( voc_num )
+x_train = np.zeros(( doc_num, voc_num ))
+y_train = np.zeros(( doc_num, 20 ))
+
+for i in range( 100 ):
+	#for i in range( len( train_data['doc_id'] ) ):
+  row = int( train_data['doc_id'][i] ) - 1
+  col = int( train_data['word_id'][i] ) - 1
+  tf[row][col] = int( train_data['num_of_word'][i] ) 
+  word[col] += 1
+  total[row] += int( train_data['num_of_word'][i] )
+print("finish 1")
+
+temp = log( doc_num )
 for i in range( doc_num ):
-  row = int( train_data['doc_id'][i] )
-  col = int( train_data['word_id'][i] )
-  count[row][col] = train_data['num_of_word'][i]  
+  if ( i % 1000 == 0 ):
+    print (i)
+  for j in range( voc_num ):
+    tf[i][j] = tf[i][j] / total[i]
+    if ( doc_num < word[j] ):
+			print ("error")
+			print (word[j])
+    x_train[i][j] = tf[i][j] * ( temp - log( word[j]+1 ) )
 
+print("finish 2")
 
-#model.add(Dense(units = 64, input_dim = 100))
-#model.add(Activation('relu'))
-#model.add(Dense(units = 10))
-#model.add(Activation('softmax'))
+for i in range( doc_num ):
+  print ( train_label['label'][i] )
+  y_train[i][int(train_label['label'][i])-1] = 1;
+print("finish 3")
+#for i in range( len( train_data['doc_id'] ) ):
 
-#model.compile(loss='categorical_crossentropy',
-#              optimizer='sgd',
-#              metrics=['accuracy'])
-#model.fit(x_train, y_train, epochs = nb_epoch_1, batch_size = batch_size)
+del tf
+del total
+del word
+model = Sequential()
+model.add(Dense(units = 64, input_shape = (voc_num, )))
+model.add(Activation('relu'))
+model.add(Dense(20))
+model.add(Activation('softmax'))
+
+model.compile(loss='categorical_crossentropy',
+              optimizer='sgd',
+              metrics=['accuracy'])
+model.fit(x_train, y_train, epochs = nb_epoch_1, batch_size = batch_size)
+model.save( "model" )
+#model.fit(x_train, y_train, epochs = nb_epoch_1)
 #loss = model.evaluate(x_test, y_test, batch_size = batch_size)
