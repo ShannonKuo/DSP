@@ -99,15 +99,16 @@ for i in range( 100 ):
 print("finish 1")
 
 temp = log( doc_num )
-for i in range( doc_num ):
-  if ( i % 1000 == 0 ):
-    print (i)
-  for j in range( voc_num ):
+for j in range( voc_num ):
+  log_word = log( word[j]+1 );
+  if ( j % 100 == 0 ):
+    print (j / voc_num * 100)
+  for i in range( doc_num ):
     tf[i][j] = tf[i][j] / total[i]
     if ( doc_num < word[j] ):
 			print ("error")
 			print (word[j])
-    x_train[i][j] = tf[i][j] * ( temp - log( word[j]+1 ) )
+    x_train[i][j] = tf[i][j] * ( temp - log_word )
 
 print("finish 2")
 
