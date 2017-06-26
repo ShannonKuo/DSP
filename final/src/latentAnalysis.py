@@ -29,7 +29,7 @@ nb_epoch_1 = int(sys.argv[2])
 batch_size = 32
 valid = 50
 sep = ' '
-_loadFeature = 1
+_loadFeature = 0
 
 dtypes1 = { 'doc_id': np.str, 'word_id': np.str, 'num_of_word': np.str }
 dtypes2 = { 'label': np.str }
@@ -64,9 +64,9 @@ if _loadFeature == 0:
     word[col] += 1
     total[row] += int( t_data['num_of_word'][i] )
   if _train == 1:
-    output_feature = open("output_feature_train.csv", "w")
+    output_feature = open("../data/output_feature_train.csv", "w")
   else:
-    output_feature = open("output_feature_test.csv", "w")
+    output_feature = open("../data/output_feature_test.csv", "w")
   temp = log( doc_num )
   for j in range( voc_num ):
     log_word = temp - float(log_table["value"][word[j]])
@@ -87,9 +87,9 @@ if _loadFeature == 0:
 else:
   print( "load feature" )
   if _train == 1:
-    file = open("output_feature_train.csv", "r")
+    file = open("../data/output_feature_train.csv", "r")
   else:
-    file = open("output_feature_test.csv", "r")
+    file = open("../data/output_feature_test.csv", "r")
   x_t = []
   cnt = 0
   for line in file.xreadlines():
@@ -118,12 +118,12 @@ if _train == 1:
                 optimizer='sgd',
                 metrics=['accuracy'])
   model.fit(np.array(x_t)[valid:doc_num-1,:], np.array(y_t)[valid:doc_num-1,:], epochs = nb_epoch_1, batch_size = batch_size)
-  model.save( "model" + sys.argv[2] + ".h5" )
+  model.save( "../data/model" + sys.argv[2] + ".h5" )
   loss = model.evaluate(np.array(x_t)[0:valid-1,:], np.array(y_t)[0:valid-1,:], batch_size = batch_size)
 else:
   print( "start testing" )
-  model = load_model("model" + sys.argv[2] + ".h5")
-  output_ans = open("output_ans" + sys.argv[2] + ".txt", "w")
+  model = load_model("../data/model" + sys.argv[2] + ".h5")
+  output_ans = open("../data/output_ans" + sys.argv[2] + ".txt", "w")
   p = model.predict(np.array(x_t), batch_size = batch_size)
   ans = np.zeros( len(t_label['label']) )
   correct = 0
